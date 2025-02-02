@@ -3,6 +3,7 @@ from googleapiclient.discovery import build
 from auth import authenticate
 
 
+# Funkcja pobierająca wydarzenia na dzisiejszy dzień
 def get_events_today():
     events_list = []
     creds = authenticate()
@@ -25,16 +26,14 @@ def get_events_today():
         print("Brak wydarzeń na dzisiaj.")
         return events_list
 
-    # Zbierz wydarzenia do listy
+    # Tworzenie listy wydarzeń
     for event in events:
-        # Upewnij się, że "summary" istnieje w wydarzeniu (nie wszystkie wydarzenia muszą mieć tytuł)
         title = event.get('summary', 'Bez tytułu')
 
         # Sprawdzanie czasu rozpoczęcia i zakończenia
-        start_time = event.get('start', {}).get('dateTime', None)  # Czas rozpoczęcia
-        end_time = event.get('end', {}).get('dateTime', None)  # Czas zakończenia
+        start_time = event.get('start', {}).get('dateTime', None)
+        end_time = event.get('end', {}).get('dateTime', None)
 
-        # Dodajemy dane o czasie do słownika
         events_list.append({
             'title': title,
             'id': event['id'],
@@ -44,6 +43,7 @@ def get_events_today():
     return events_list
 
 
+# Funkcja usuwająca wydarzenie na podstawie jego ID
 def delete_event(event_id):
     creds = authenticate()
     service = build('calendar', 'v3', credentials=creds)
@@ -55,14 +55,8 @@ def delete_event(event_id):
         print(f"Błąd podczas usuwania wydarzenia: {e}")
 
 
-def debug_log(**kwargs):
-    """Funkcja pomocnicza do debugowania"""
-    for key, value in kwargs.items():
-        print(f"DEBUG: {key}='{value}'")
-
-
 def parse_datetime(date_str, time_str):
-    """Konwersja daty i czasu na obiekt datetime z obsługą wyjątków."""
+    # Funkcja konwertująca datę i czas na obiekt datetime z obsługą wyjątków
     try:
         if len(time_str) == 2 and time_str.isdigit():
             time_str += ':00'
@@ -79,16 +73,7 @@ def parse_datetime(date_str, time_str):
 
 
 def create_event(title, description=None, start_date=None, start_time=None, end_date=None, end_time=None):
-    debug_log(
-        title=title,
-        description=description,
-        start_date=start_date,
-        start_time=start_time,
-        end_date=end_date,
-        end_time=end_time,
-    )
 
-    # Sprawdzenie wymaganych parametrów
     if not start_date or not start_time:
         raise ValueError("Musisz podać datę i godzinę rozpoczęcia.")
     if not end_date or not end_time:
@@ -98,7 +83,6 @@ def create_event(title, description=None, start_date=None, start_time=None, end_
     start = parse_datetime(start_date, start_time)
     end = parse_datetime(end_date, end_time)
 
-    # Walidacja czasu zakończenia
     if end <= start:
         print(f'st: {start} end: {end}')
         raise ValueError("Czas zakończenia musi być po czasie rozpoczęcia.")
@@ -107,7 +91,6 @@ def create_event(title, description=None, start_date=None, start_time=None, end_
     start_iso = start.isoformat()
     end_iso = end.isoformat()
 
-    debug_log(start_iso=start_iso, end_iso=end_iso)
 
     # Autoryzacja do Google Calendar
     creds = authenticate()
